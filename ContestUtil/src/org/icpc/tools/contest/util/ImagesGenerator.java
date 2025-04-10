@@ -63,6 +63,18 @@ public class ImagesGenerator {
 
 	private static BufferedImage icpcLogo, logo;
 
+	class Coordinate {
+		int x;
+		int y;
+		int color;
+
+		public Coordinate(int x, int y, int color) {
+			this.x = x;
+			this.y = y;
+			this.color = color;
+		}
+	}
+
 	static class ImageSpec {
 		Dimension d;
 		boolean pad;
