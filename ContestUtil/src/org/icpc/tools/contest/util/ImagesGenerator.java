@@ -304,7 +304,7 @@ public class ImagesGenerator {
 
 					File orgFolder = new File(orgRootFolder, org.getId());
 					File imgFile = getDefaultFile(orgFolder, "logo");
-					if (imgFile.exists())
+					if (imgFile != null && imgFile.exists())
 						mod = imgFile.lastModified();
 
 					logoImg = org.getLogoImage(1920, 1080, true, true);
