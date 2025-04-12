@@ -169,6 +169,15 @@ public class ImagesGenerator {
 		generator.missingDataReport();
 	}
 
+	private static File[] myListFiles(File dir) {
+		File[] folders = dir.listFiles();
+		if (folders == null) {
+			System.err.println("Failed to list files in " + dir.getAbsolutePath());
+			System.exit(2);
+		}
+		return folders;
+	}
+
 	protected ImagesGenerator(File contestRoot) {
 		this.contestRoot = contestRoot;
 		init();
@@ -355,7 +364,7 @@ public class ImagesGenerator {
 		}
 
 		File imgFile = null;
-		File[] files = folder.listFiles();
+		File[] files = myListFiles(folder);
 		for (File ff : files) {
 			// skip generated files
 			String name = ff.getName();
@@ -405,7 +414,7 @@ public class ImagesGenerator {
 
 		int numWarnings = 0;
 
-		File[] folders = rootFolder.listFiles();
+		File[] folders = myListFiles(rootFolder);
 		for (File folder : folders) {
 			if (folder.isDirectory()) {
 				String folderName = folder.getName();
@@ -430,7 +439,7 @@ public class ImagesGenerator {
 					img = removeBorders(img);
 
 					// clean up old generated files
-					File[] files2 = folder.listFiles();
+					File[] files2 = myListFiles(folder);
 					for (File ff : files2) {
 						if (ff.getName().startsWith(property + ".") && hasExtension(ff.getName(), IMAGE_EXTENSIONS)
 								&& ff.lastModified() != mod)
