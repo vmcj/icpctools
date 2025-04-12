@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -631,16 +632,26 @@ public class ImagesGenerator {
 
 		try {
 			InputStream in = getClass().getClassLoader().getResourceAsStream("font/HELV.PFB");
+			if (in == null) {
+				System.err.println("Font/HELV.PFB not found");
+				System.exit(3);
+			}
 			masterFont = Font.createFont(Font.TYPE1_FONT, in);
 			in.close();
 		} catch (Exception e) {
 			Trace.trace(Trace.ERROR, "Could not load font", e);
+			System.exit(3);
 		}
 
 		fonts = getFonts(masterFont);
 
 		try {
-			icpcLogo = ImageIO.read(getClass().getClassLoader().getResource("images/icpc-logo.png"));
+			URL input = getClass().getClassLoader().getResource("images/icpc-logo.png");
+			if (input == null) {
+				System.err.println("Images/icpc-logo.png not found");
+				System.exit(3);
+			}
+			icpcLogo = ImageIO.read(input);
 			File logoFile = new File(contestRoot, "contest/logo.png");
 			if (!logoFile.exists())
 				logoFile = new File(contestRoot, "config/logo.png");
