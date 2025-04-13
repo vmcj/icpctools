@@ -170,6 +170,18 @@ public class ImagesGenerator {
 		generator.missingDataReport();
 	}
 
+	private static void writeJPEGImage(BufferedImage img, File file) throws IOException {
+		final ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
+		FileImageOutputStream fileOut = new FileImageOutputStream(file);
+		writer.setOutput(fileOut);
+
+		JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
+		jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		jpegParams.setCompressionQuality(0.975f);
+		writer.write(null, new IIOImage(img, null, null), jpegParams);
+		fileOut.close();
+	}
+
 	private static File[] myListFiles(File dir) {
 		File[] folders = dir.listFiles();
 		if (folders == null) {
@@ -533,16 +545,7 @@ public class ImagesGenerator {
 
 		g.dispose();
 
-		final ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
-		FileImageOutputStream fileOut = new FileImageOutputStream(file);
-		writer.setOutput(fileOut);
-
-		JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
-		jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-		jpegParams.setCompressionQuality(0.975f);
-		writer.write(null, new IIOImage(newImg, null, null), jpegParams);
-		fileOut.close();
-
+		writeJPEGImage(img, file);
 		// ImageIO.write(newImg, "jpg", hdFile);
 	}
 
@@ -774,15 +777,7 @@ public class ImagesGenerator {
 		File file = new File(contestRoot, "images" + File.separator + "ribbon.jpg");
 
 		// ImageIO.write(img, "jpg", file);
-		final ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
-		FileImageOutputStream fileOut = new FileImageOutputStream(file);
-		writer.setOutput(fileOut);
-
-		JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
-		jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-		jpegParams.setCompressionQuality(0.975f);
-		writer.write(null, new IIOImage(img, null, null), jpegParams);
-		fileOut.close();
+		writeJPEGImage(img, file);
 	}
 
 	private void createPreview() throws IOException {
