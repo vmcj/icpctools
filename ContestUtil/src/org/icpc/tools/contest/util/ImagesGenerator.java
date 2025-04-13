@@ -49,6 +49,9 @@ public class ImagesGenerator {
 	private static final int HD_MARGIN = 15;
 	private static final int HD_TOP = 30;
 	private static final double FUDGE = 0.075; // 7.5%
+	private static final double LUMINANCE_BLACK = 0.0;
+	private static final double LUMINANCE_WHITE = 1.0;
+	private static final double CONTRAST_THRESHOLD = 0.5;
 
 	private static final String[] IMAGE_EXTENSIONS = new String[] { "svg", "png", "jpg", "jpeg" };
 
@@ -490,6 +493,16 @@ public class ImagesGenerator {
 								}
 							}
 						}
+						double ratio = getContrastRatioOfBorder(border, Color.BLACK);
+						Color borderColor = Color.BLACK;
+						double ratioWhite = getContrastRatioOfBorder(border, Color.WHITE);
+						if (ratio >= ratioWhite) {
+							borderColor = Color.WHITE;
+							ratio = ratioWhite;
+						}
+						if (ratio < CONTRAST_THRESHOLD) {
+							Trace.trace(Trace.INFO, "Got contrast ratio: " + ratio + ", adding contrasting border to " + objectName + " " + property + ": " + folderName);
+						}
 
 						// clean up old generated files
 						File[] files2 = folder.listFiles();
@@ -558,6 +571,40 @@ public class ImagesGenerator {
 			}
 		}
 		return storage;
+	}
+
+	private double getContrastRatioOfBorder(ArrayList<Coordinate> border) {
+		int borderRed = 0;
+		int borderGreen = 0;
+		int borderBlue = 0;
+		for (Coordinate c: border) {
+			Color color = new Color(c.color);
+			borderRed += color.getRed();
+			borderGreen += color.getGreen();
+			borderBlue += color.getBlue();
+		}
+		borderRed /= border.size();
+		borderGreen /= border.size();
+		borderBlue /= border.size();
+		double luminance = calculateLuminance(borderRed, borderGreen, borderBlue);
+		double luminanceRatioWhite = (luminance + 0.05) / (LUMINANCE_WHITE + 0.05);
+		double luminanceRatioBlack = (LUMINANCE_BLACK + 0.05) / (luminance + 0.05);
+		return Math.min(luminanceRatioBlack, luminanceRatioWhite);
+	}
+
+	private static double calculateLuminance(int red, int green, int blue) {
+		// Normalize RGB values to the range [0, 1]
+		double r = normalizeToLinear(red / 255.0);
+		double g = normalizeToLinear(green / 255.0);
+		double b = normalizeToLinear(blue / 255.0);
+
+		// Apply the luminance formula
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	}
+
+	public static double normalizeToLinear(double channel) {
+		// Convert sRGB to linear space
+		return (channel <= 0.03928) ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
 	}
 
 	private ArrayList<Coordinate> getImageBorder(BufferedImage img) {
