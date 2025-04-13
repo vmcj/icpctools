@@ -475,6 +475,7 @@ public class ImagesGenerator {
 						}
 
 						img = removeBorders(img);
+						ArrayList<Coordinate> border = getImageBorder(img);
 
 						// clean up old generated files
 						File[] files2 = folder.listFiles();
@@ -505,6 +506,46 @@ public class ImagesGenerator {
 		}
 
 		Trace.trace(Trace.USER, numWarnings + " warnings out of " + contest.getNumOrganizations());
+	}
+
+	private ArrayList<Coordinate> getImageBorder(BufferedImage img) {
+		ArrayList<Coordinate> borderCells = new ArrayList<>();
+		for (int x = 0; x < img.getWidth(); x++) {
+			for (int y = 0; y < img.getHeight(); y++) {
+				if (checkBorder(img, x, y)) {
+					borderCells.add(new Coordinate(x, y, img.getRGB(x, y)));
+					if (DEBUG) {
+						img.setRGB(x, y, Color.YELLOW.getRGB());
+					}
+				}
+			}
+		}
+		return borderCells;
+	}
+
+	public boolean checkBorder(BufferedImage img, int x, int y) {
+		int[] directions = {-1, 0, 1};
+		if (checkTransparent(img, x, y)) {
+			return false;
+		}
+		for (int dy : directions) {
+			for (int dx : directions) {
+				int nx = x + dx;
+				int ny = y + dy;
+				if (nx == ny && nx == 0)
+					continue;
+				if (checkTransparent(img, nx, ny))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean checkTransparent(BufferedImage img, int x, int y) {
+		if (x < 0 || y < 0 || x >= img.getWidth() || y >= img.getHeight())
+			return false;
+		Color color = new Color(img.getRGB(x, y), true);
+		return (color.getAlpha() < 255);
 	}
 
 	public void generatePersonPhotos() {
