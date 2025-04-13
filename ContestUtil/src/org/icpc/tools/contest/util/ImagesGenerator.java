@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -383,14 +385,15 @@ public class ImagesGenerator {
 			Trace.trace(Trace.ERROR, "Failed to read " + folder.getAbsolutePath());
 			return imgFiles;
 		}
+
+		String regex = "logo\\.[0-9]*x[0-9]*\\.[a-z]*";
+		Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 		for (File ff : files) {
 			// skip generated files
-			String name = ff.getName();
-			if (name.startsWith(property + ".") && hasExtension(name, IMAGE_EXTENSIONS) && name.contains("x")) {
-				// skip over generated logos (should really use regex to look for logo.<w>x<h>.)
-				continue;
+			Matcher matcher = pattern.matcher(ff.getName());
+			if(!matcher.find()) {
+				imgFiles.add(ff);
 			}
-			imgFiles.add(ff);
 		}
 		return imgFiles;
 	}
