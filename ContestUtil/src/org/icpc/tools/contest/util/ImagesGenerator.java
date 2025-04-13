@@ -316,7 +316,7 @@ public class ImagesGenerator {
 						name = org.getActualFormalName();
 
 					File orgFolder = new File(orgRootFolder, org.getId());
-					File imgFile = getDefaultFile(orgFolder, "logo");
+					File imgFile = getDefaultFiles(orgFolder, "logo").get(0);
 					if (imgFile.exists())
 						mod = imgFile.lastModified();
 
@@ -369,15 +369,15 @@ public class ImagesGenerator {
 		return false;
 	}
 
-	private static File getDefaultFile(File folder, String property) {
+	private static ArrayList<File> getDefaultFiles(File folder, String property) {
 		// first look for default names, in order of extension preference
+		ArrayList<File> imgFiles = new ArrayList<>();
 		for (String s : IMAGE_EXTENSIONS) {
 			File f = new File(folder, property + "." + s);
 			if (f.exists())
-				return f;
+				imgFiles.add(f);
 		}
 
-		File imgFile = null;
 		File[] files = folder.listFiles();
 		if (files == null) {
 			Trace.trace(Trace.ERROR, "Failed to read " + folder.getAbsolutePath());
@@ -390,9 +390,9 @@ public class ImagesGenerator {
 				// skip over generated logos (should really use regex to look for logo.<w>x<h>.)
 				continue;
 			}
-			imgFile = ff;
+			imgFiles.add(ff);
 		}
-		return imgFile;
+		return imgFiles;
 	}
 
 	public void generateOrganizationLogos() {
@@ -440,9 +440,9 @@ public class ImagesGenerator {
 		for (File folder : folders) {
 			if (folder.isDirectory()) {
 				String folderName = folder.getName();
-				File imgFile = getDefaultFile(folder, property);
+				ArrayList<File> imgFiles = getDefaultFiles(folder, property);
 
-				if (imgFile == null) {
+				if (imgFiles.isEmpty()) {
 					Trace.trace(Trace.ERROR, "Warning: no image found (" + folder.getName() + ")");
 					numWarnings++;
 					continue;
