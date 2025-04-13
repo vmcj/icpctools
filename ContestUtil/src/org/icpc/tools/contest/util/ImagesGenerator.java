@@ -451,41 +451,43 @@ public class ImagesGenerator {
 					continue;
 				}
 
-				try {
-					Trace.trace(Trace.USER, "Updating " + objectName + " " + property + ": " + folderName);
+				for (File imgFile : imgFiles) {
+					try {
+						Trace.trace(Trace.USER, "Updating " + objectName + " " + property + ": " + folderName);
 
-					long mod = imgFile.lastModified();
-					BufferedImage img = ImageIO.read(imgFile);
-					if (img == null) {
-						Trace.trace(Trace.WARNING, "Couldn't read image");
-						continue;
+						long mod = imgFile.lastModified();
+						BufferedImage img = ImageIO.read(imgFile);
+						if (img == null) {
+							Trace.trace(Trace.WARNING, "Couldn't read image");
+							continue;
+						}
+
+						img = removeBorders(img);
+
+						// clean up old generated files
+						File[] files2 = folder.listFiles();
+						for (File ff : files2) {
+							if (ff.getName().startsWith(property + ".") && hasExtension(ff.getName(), IMAGE_EXTENSIONS)
+									&& ff.lastModified() != mod)
+								if (!ff.delete()) {
+									System.err.println("Failed to remove old files");
+									System.exit(2);
+								}
+						}
+
+						numWarnings = checkForWarnings(folderName, img, numWarnings, transparency);
+
+						String name = imgFile.getName().toLowerCase();
+						if (!name.equals(property + "." + preferredExtension)) {
+							// there's no filename with the spec extension, create one
+							writeImage(property, img, folder, mod, false, preferredExtension);
+						}
+
+						generateImageSpec(img, spec, folder, property, preferredExtension, mod);
+						break;
+					} catch (Exception e) {
+						Trace.trace(Trace.ERROR, "Error generating image: " + imgFile.getAbsolutePath(), e);
 					}
-
-					img = removeBorders(img);
-
-					// clean up old generated files
-					File[] files2 = folder.listFiles();
-					for (File ff : files2) {
-						if (ff.getName().startsWith(property + ".") && hasExtension(ff.getName(), IMAGE_EXTENSIONS)
-								&& ff.lastModified() != mod)
-							if (!ff.delete()) {
-								System.err.println("Failed to remove old files");
-								System.exit(2);
-							}
-
-					}
-
-					numWarnings = checkForWarnings(folderName, img, numWarnings, transparency);
-
-					String name = imgFile.getName().toLowerCase();
-					if (!name.equals(property + "." + preferredExtension)) {
-						// there's no filename with the spec extension, create one
-						writeImage(property, img, folder, mod, false, preferredExtension);
-					}
-
-					generateImageSpec(img, spec, folder, property, preferredExtension, mod);
-				} catch (Exception e) {
-					Trace.trace(Trace.ERROR, "Error generating image: " + imgFile.getAbsolutePath(), e);
 				}
 			}
 		}
