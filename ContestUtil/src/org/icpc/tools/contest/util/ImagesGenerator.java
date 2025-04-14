@@ -502,6 +502,7 @@ public class ImagesGenerator {
 						}
 						if (ratio < CONTRAST_THRESHOLD) {
 							Trace.trace(Trace.INFO, "Got contrast ratio: " + ratio + ", adding contrasting border to " + objectName + " " + property + ": " + folderName);
+							img = addContrastingBorder(img, borderColor, border);
 						}
 
 						// clean up old generated files
@@ -535,6 +536,43 @@ public class ImagesGenerator {
 		Trace.trace(Trace.USER, numWarnings + " warnings out of " + contest.getNumOrganizations());
 	}
 
+	private ArrayList<Coordinate> findCoordinatesAroundBorder(BufferedImage img, ArrayList<Coordinate> border, int borderWidth, boolean transparent) {
+		int[] directions = {-1, 0, 1};
+		ArrayList<Coordinate> coordinates = new ArrayList<Coordinate>();
+		for (Coordinate c : border) {
+			for (int dx: directions) {
+				for (int dy: directions) {
+					if (dx == 0 && dy == 0)
+						continue;
+					for (int x = 0; x < borderWidth; x++) {
+						int nx = c.x + x * dx;
+						if (nx < 0 || nx >= img.getWidth())
+							continue;
+						int max_y = (int)(0.5 + Math.sqrt(Math.pow(depth, 2) - Math.pow(x, 2)));
+						for (int y = 0; y < max_y; y++) {
+							int ny = c.y + y * dy;
+							if (ny < 0 || ny >= img.getHeight())
+								continue;
+							if (( transparent &&  checkTransparent(img, nx, ny)) ||
+							    (!transparent && !checkTransparent(img, nx, ny))):
+								coordinates.add(new Coordinate(nx, ny, img.getRGB(nx, ny)));
+
+						}
+					}
+				}
+			}
+		}
+		return coordinates;
+	}
+
+	private BufferedImage addContrastingBorder(BufferedImage img, Color borderColor, ArrayList<Coordinate> border) {
+		int borderWidth = (int)(0.5 + Math.min(img.getWidth(), img.getHeight()) / 10.0);
+		for (Coordinate c : findCoordinatesAroundBorder(img, border, borderWidth, true)) {
+			img.setRGB(c.x, c.y, borderColor.getRGB());
+		}
+		return img;
+	}
+
 	private int[][] getPixelsInImageNextToBorder(BufferedImage img, ArrayList<Coordinate> border) {
 		int[][] storage = new int[img.getWidth()][img.getHeight()];
 		for (int x = 0; x < img.getWidth(); x++) {
@@ -542,33 +580,13 @@ public class ImagesGenerator {
 				storage[x][y] = -1; // Default it would be considered black;
 			}
 		}
-		for (Coordinate c : border) {
-			// Circle around the point, don't use transparent cells
-			int[] directions = {-1, 1};
-			for (int dx : directions) {
-				for (int dy : directions) {
-					storage = fillBorderRadius(img, storage, dx, dy, c.x, c.y);
-				}
-			}
-		}
-		return storage;
+		return fillBorderRadius(img, storage, border);
 	}
 
-	private int[][] fillBorderRadius(BufferedImage img, int[][] storage, int directionX, int directionY, int borderX, int borderY) {
+	private int[][] fillBorderRadius(BufferedImage img, int[][] storage, ArrayList<Coordinate> border) {
 		int depth = Math.min(img.getWidth(), img.getHeight()) / 20;
-		for (int x = 0; x < depth; x++) {
-			int nx = borderX + x * directionX;
-			if (nx < 0 || nx >= img.getWidth())
-				continue;
-			int max_y = (int)(0.5 + Math.sqrt(Math.pow(depth, 2) - Math.pow(x, 2)));
-			for (int y = 0; y < max_y; y++) {
-				int ny = borderY + y * directionY;
-				if (ny < 0 || ny >= img.getHeight())
-					continue;
-				if (!checkTransparent(img, nx, ny)) {
-					storage[nx][ny] = img.getRGB(nx, ny);
-				}
-			}
+		for (Coordinate c : findCoordinatesAroundBorder(img, border, depth, false)) {
+			storage[c.x][c.y] = img.getRGB(c.x, c.y);
 		}
 		return storage;
 	}
