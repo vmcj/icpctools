@@ -476,6 +476,20 @@ public class ImagesGenerator {
 
 						img = removeBorders(img);
 						ArrayList<Coordinate> border = getImageBorder(img);
+						int[][] takenIntoAccount = getPixelsInImageNextToBorder(img, border);
+						int totalSumColors = 0;
+						int pixelsCount = 0;
+						for (int x = 0; x < takenIntoAccount.length; x++) {
+							for (int y = 0; y < takenIntoAccount[x].length; y++) {
+								if (takenIntoAccount[x][y] != -1) {
+									totalSumColors += takenIntoAccount[x][y];
+									pixelsCount++;
+									if (DEBUG) {
+										img.setRGB(x, y, Color.BLUE.getRGB());
+									}
+								}
+							}
+						}
 
 						// clean up old generated files
 						File[] files2 = folder.listFiles();
@@ -506,6 +520,44 @@ public class ImagesGenerator {
 		}
 
 		Trace.trace(Trace.USER, numWarnings + " warnings out of " + contest.getNumOrganizations());
+	}
+
+	private int[][] getPixelsInImageNextToBorder(BufferedImage img, ArrayList<Coordinate> border) {
+		int[][] storage = new int[img.getWidth()][img.getHeight()];
+		for (int x = 0; x < img.getWidth(); x++) {
+			for (int y = 0; y < img.getHeight(); y++) {
+				storage[x][y] = -1; // Default it would be considered black;
+			}
+		}
+		for (Coordinate c : border) {
+			// Circle around the point, don't use transparent cells
+			int[] directions = {-1, 1};
+			for (int dx : directions) {
+				for (int dy : directions) {
+					storage = fillBorderRadius(img, storage, dx, dy, c.x, c.y);
+				}
+			}
+		}
+		return storage;
+	}
+
+	private int[][] fillBorderRadius(BufferedImage img, int[][] storage, int directionX, int directionY, int borderX, int borderY) {
+		int depth = Math.min(img.getWidth(), img.getHeight()) / 20;
+		for (int x = 0; x < depth; x++) {
+			int nx = borderX + x * directionX;
+			if (nx < 0 || nx >= img.getWidth())
+				continue;
+			int max_y = (int)(0.5 + Math.sqrt(Math.pow(depth, 2) - Math.pow(x, 2)));
+			for (int y = 0; y < max_y; y++) {
+				int ny = borderY + y * directionY;
+				if (ny < 0 || ny >= img.getHeight())
+					continue;
+				if (!checkTransparent(img, nx, ny)) {
+					storage[nx][ny] = img.getRGB(nx, ny);
+				}
+			}
+		}
+		return storage;
 	}
 
 	private ArrayList<Coordinate> getImageBorder(BufferedImage img) {
