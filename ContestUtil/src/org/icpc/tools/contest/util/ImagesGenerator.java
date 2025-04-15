@@ -52,7 +52,7 @@ public class ImagesGenerator {
 
 	private static final String[] IMAGE_EXTENSIONS = new String[] { "svg", "png", "jpg", "jpeg" };
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final Rectangle LOGO = new Rectangle(95, 795, 230, 230);
 	private static final Rectangle TEXT = new Rectangle(370, 795, 1275, 230);
 
