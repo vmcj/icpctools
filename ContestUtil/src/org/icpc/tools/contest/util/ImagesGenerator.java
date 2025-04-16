@@ -465,12 +465,16 @@ public class ImagesGenerator {
 					numWarnings++;
 					continue;
 				}
-
 				for (File imgFile : imgFiles) {
 					try {
 						Trace.trace(Trace.USER, "Updating " + objectName + " " + property + ": " + folderName);
 
 						long mod = imgFile.lastModified();
+						if (imgFile.getName().toLowerCase().endsWith(".svg")) {
+							Trace.trace(Trace.WARNING, "Image type svg is not implemented for: " + imgFile.getAbsolutePath());
+							continue;
+						}
+
 						BufferedImage img = ImageIO.read(imgFile);
 						if (img == null) {
 							Trace.trace(Trace.WARNING, "Couldn't read image");
