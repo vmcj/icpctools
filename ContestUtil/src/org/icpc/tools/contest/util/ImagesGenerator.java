@@ -49,8 +49,6 @@ public class ImagesGenerator {
 	private static final int HD_MARGIN = 15;
 	private static final int HD_TOP = 30;
 	private static final double FUDGE = 0.075; // 7.5%
-	private static final double LUMINANCE_BLACK = 0.0;
-	private static final double LUMINANCE_WHITE = 1.0;
 	private static final double CONTRAST_THRESHOLD = 0.5;
 
 	private static final String[] IMAGE_EXTENSIONS = new String[] { "svg", "png", "jpg", "jpeg" };
@@ -482,7 +480,7 @@ public class ImagesGenerator {
 						}
 
 						img = removeBorders(img);
-						ArrayList<Coordinate> border = getImageBorder(img);
+						/*ArrayList<Coordinate> border = getImageBorder(img);
 						int[][] takenIntoAccount = getPixelsInImageNextToBorder(img, border);
 						int totalSumColors = 0;
 						int pixelsCount = 0;
@@ -507,7 +505,7 @@ public class ImagesGenerator {
 						if (ratio < CONTRAST_THRESHOLD) {
 							Trace.trace(Trace.INFO, "Got contrast ratio: " + ratio + ", adding contrasting border to " + objectName + " " + property + ": " + folderName);
 							img = addContrastingBorder(img, borderColor, border);
-						}
+						}*/
 
 						// clean up old generated files
 						File[] files2 = folder.listFiles();
@@ -552,15 +550,14 @@ public class ImagesGenerator {
 						int nx = c.x + x * dx;
 						if (nx < 0 || nx >= img.getWidth())
 							continue;
-						int max_y = (int)(0.5 + Math.sqrt(Math.pow(depth, 2) - Math.pow(x, 2)));
+						int max_y = (int)(0.5 + Math.sqrt(Math.pow(borderWidth, 2) - Math.pow(x, 2)));
 						for (int y = 0; y < max_y; y++) {
 							int ny = c.y + y * dy;
 							if (ny < 0 || ny >= img.getHeight())
 								continue;
 							if (( transparent &&  checkTransparent(img, nx, ny)) ||
-							    (!transparent && !checkTransparent(img, nx, ny))):
+								(!transparent && !checkTransparent(img, nx, ny)))
 								coordinates.add(new Coordinate(nx, ny, img.getRGB(nx, ny)));
-
 						}
 					}
 				}
@@ -595,7 +592,7 @@ public class ImagesGenerator {
 		return storage;
 	}
 
-	private double getContrastRatioOfBorder(ArrayList<Coordinate> border) {
+	private double getContrastRatioOfBorder(ArrayList<Coordinate> border, Color backGroundColor) {
 		int borderRed = 0;
 		int borderGreen = 0;
 		int borderBlue = 0;
@@ -608,10 +605,12 @@ public class ImagesGenerator {
 		borderRed /= border.size();
 		borderGreen /= border.size();
 		borderBlue /= border.size();
+		int bgColorRed = backGroundColor.getRed();
+		int bgColorGreen = backGroundColor.getGreen();
+		int bgColorBlue = backGroundColor.getBlue();
 		double luminance = calculateLuminance(borderRed, borderGreen, borderBlue);
-		double luminanceRatioWhite = (luminance + 0.05) / (LUMINANCE_WHITE + 0.05);
-		double luminanceRatioBlack = (LUMINANCE_BLACK + 0.05) / (luminance + 0.05);
-		return Math.min(luminanceRatioBlack, luminanceRatioWhite);
+		double luminanceColor = calculateLuminance(bgColorRed, bgColorGreen, bgColorBlue);
+		return (luminance + 0.05) / (luminanceColor + 0.05);
 	}
 
 	private static double calculateLuminance(int red, int green, int blue) {
