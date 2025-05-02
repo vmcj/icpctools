@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +36,15 @@ import org.icpc.tools.contest.model.IOrganization;
 import org.icpc.tools.contest.model.ITeam;
 import org.icpc.tools.contest.model.feed.DiskContestSource;
 import org.icpc.tools.contest.model.internal.Contest;
+import org.icpc.tools.contest.model.internal.ContestObject;
+
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
+import org.apache.batik.transcoder.SVGAbstractTranscoder;
+import org.apache.batik.transcoder.TranscoderInput;
+import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.image.ImageTranscoder;
+import org.apache.batik.util.XMLResourceDescriptor;
+import org.w3c.dom.svg.SVGDocument;
 
 /**
  * Helps convert logos and other images from raw source (from the CMS export or hand-built contest
@@ -160,8 +170,10 @@ public class ImagesGenerator {
 			e.printStackTrace();
 		}
 
+		/*
 		Trace.trace(Trace.USER, "----- Generating person photos -----");
 		generator.generatePersonPhotos();
+		*/
 
 		Trace.trace(Trace.USER, "----- Done generating -----");
 		Trace.trace(Trace.USER, (System.currentTimeMillis() - time) + " ms");
@@ -423,6 +435,46 @@ public class ImagesGenerator {
 		}
 	}
 
+	private static SVGDocument loadSVG(File svgFile) throws Exception {
+		String parser = XMLResourceDescriptor.getXMLParserClassName();
+		SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
+		return factory.createSVGDocument(svgFile.getAbsolutePath());
+	}
+
+	private static BufferedImage resizeSVG(SVGDocument svg, int width, int height) {
+		try {
+			String ws;
+			String hs;
+			String viewBox = svg.getDocumentElement().getAttribute("viewBox");
+			String[] viewBoxValues = viewBox.split(" ");
+			if (viewBoxValues.length == 4) {
+				ws = viewBoxValues[2];
+				hs = viewBoxValues[3];
+			} else {
+				ws = svg.getDocumentElement().getAttribute("width");
+				hs = svg.getDocumentElement().getAttribute("height");
+				if (ws.isBlank() || hs.isBlank())
+					return null;
+			}
+
+			float w = Float.parseFloat(ws);
+			float h = Float.parseFloat(hs);
+			float scale = Math.min(width / w, height / h);
+
+			ContestObject.BufferedImageTranscoder imageTranscoder = new ContestObject.BufferedImageTranscoder();
+			imageTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, w * scale);
+			imageTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, h * scale);
+
+			TranscoderInput input = new TranscoderInput(svg);
+			imageTranscoder.transcode(input, null);
+
+			return imageTranscoder.getBufferedImage();
+		} catch (Exception e) {
+			Trace.trace(Trace.ERROR, "Invalid SVG", e);
+			return null;
+		}
+	}
+
 	public void generateImages(String objectName, String property, String preferredExtension, ImageSpec[] spec) {
 		File rootFolder = new File(contestRoot, objectName);
 		if (!rootFolder.exists()) {
@@ -454,9 +506,19 @@ public class ImagesGenerator {
 					Trace.trace(Trace.USER, "Updating " + objectName + " " + property + ": " + folderName);
 
 					long mod = imgFile.lastModified();
-					BufferedImage img = ImageIO.read(imgFile);
+
+					BufferedImage img;
+					if (imgFile.getName().endsWith(".svg")) {
+						SVGDocument svg = loadSVG(imgFile);
+						img = resizeSVG(svg, 10000, 10000);
+						if (img == null) {
+							Trace.trace(Trace.ERROR, "Warning: couldn't resize SVG: " + imgFile.getAbsolutePath());
+						}
+					} else {
+						img = ImageIO.read(imgFile);
+					}
 					if (img == null) {
-						Trace.trace(Trace.WARNING, "Couldn't read image");
+						Trace.trace(Trace.WARNING, "Couldn't read image:" + imgFile.getAbsolutePath());
 						continue;
 					}
 
@@ -894,7 +956,8 @@ public class ImagesGenerator {
 					s[3] = "X";
 				} else {
 					s[3] = "";
-					BufferedImage logo = ImageIO.read(org.getLogo().first().file);
+					Trace.trace(Trace.INFO, "Looking at " + org.getLogo().first().filename);
+					/*BufferedImage logo = ImageIO.read(org.getLogo().first().file);
 					if (checkForTransparency(logo)) {
 						s[3] += "T";
 					}
@@ -903,7 +966,7 @@ public class ImagesGenerator {
 					}
 					if (checkForBadRatio(logo)) {
 						s[3] += "R";
-					}
+					}*/
 					if (s[3].isEmpty()) {
 						s[3] = null;
 					}

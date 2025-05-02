@@ -52,7 +52,7 @@ public abstract class ContestObject implements IContestObject {
 		public void addArray(String key, String[] value);
 	}
 
-	private static class BufferedImageTranscoder extends ImageTranscoder {
+	public static class BufferedImageTranscoder extends ImageTranscoder {
 		private BufferedImage img = null;
 
 		@Override
