@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager">
+    <libelement value="jar://$MODULE_DIR$/lib/jna-jpms-5.14.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/lib/jna-platform-jpms-5.14.0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/lib/vlcj-4.8.3.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/lib/vlcj-natives-4.8.3.jar!/" />
+    <src_description expected_position="0">
+      <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
+    </src_description>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
